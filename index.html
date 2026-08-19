@@ -59,6 +59,8 @@
         .action-btn.success:hover { background: #2ea043; }
         .action-btn.danger { background: rgba(248, 81, 73, 0.15); border-color: #f85149; color: #f85149; }
         .action-btn.danger:hover { background: #f85149; color: #fff; }
+        .action-btn.warning { background: rgba(210, 153, 34, 0.15); border-color: #d29922; color: #d29922; }
+        .action-btn.warning:hover { background: #d29922; color: #fff; }
     </style>
 </head>
 <body>
@@ -129,20 +131,23 @@
                 <span id="connLabel">Disconnected</span>
             </div>
             <div class="btn-group">
+                <button class="action-btn warning" id="muteBtn" style="display:none;" onclick="toggleMute()">Mute 🎤</button>
+                <button class="action-btn warning" id="deafenBtn" style="display:none;" onclick="toggleDeafen()">Deafen 🎧</button>
                 <button class="action-btn danger" id="endBtn" style="display:none;" onclick="endCall()">Leave Call 📴</button>
             </div>
         </div>
     </div>
 
-    <!-- عنصر خفي لتشغيل صوت الطرف الآخر -->
+    <!-- عنصر لتشغيل صوت الطرف الآخر -->
     <audio id="remoteAudio" autoplay></audio>
 
     <script>
         let peer;
         let activeConnection;
         let localStream;
+        let isMuted = false;
+        let isDeafened = false;
 
-        // إعداد الاتصال باستخدام سيرفرات جوجل القريبة لضمان أقل سرعة استجابة (Ping) في مصر
         const peerOptions = {
             config: {
                 'iceServers': [
@@ -152,7 +157,6 @@
             }
         };
 
-        // إنشاء معرف فريد للجهاز
         peer = new Peer(peerOptions);
 
         peer.on('open', (id) => {
@@ -162,7 +166,6 @@
             document.getElementById('connLabel').innerText = "Server Ready";
         });
 
-        // استقبال المكالمات الواردة تلقائياً من الأصدقاء
         peer.on('call', async (call) => {
             document.getElementById('statusHeading').innerText = "Incoming Call...";
             try {
@@ -211,6 +214,7 @@
         function handleActiveCall(stream) {
             const audioElem = document.getElementById('remoteAudio');
             audioElem.srcObject = stream;
+            audioElem.muted = isDeafened;
             audioElem.play();
             
             document.getElementById('statusHeading').innerText = "🟢 Live Call Active!";
@@ -219,7 +223,58 @@
             document.getElementById('statusDot').className = "dot online";
             document.getElementById('connLabel').innerText = "Voice Connected (P2P)";
             document.getElementById('micStatusText').innerText = "● In Call";
+            
+            // إظهار أزرار التحكم أثناء المكالمة
+            document.getElementById('muteBtn').style.display = "block";
+            document.getElementById('deafenBtn').style.display = "block";
             document.getElementById('endBtn').style.display = "block";
+        }
+
+        // وظيفة الميوت (كتم المايك عن الطرف الآخر)
+        function toggleMute() {
+            if (!localStream) return;
+            isMuted = !isMuted;
+            localStream.getAudioTracks()[0].enabled = !isMuted;
+            
+            const muteBtn = document.getElementById('muteBtn');
+            if (isMuted) {
+                muteBtn.innerText = "Unmute 🎤";
+                muteBtn.style.background = "rgba(248, 81, 73, 0.15)";
+                muteBtn.style.borderColor = "#f85149";
+                muteBtn.style.color = "#f85149";
+                document.getElementById('micStatusText').innerText = "● Muted";
+            } else {
+                muteBtn.innerText = "Mute 🎤";
+                muteBtn.style.background = "";
+                muteBtn.style.borderColor = "";
+                muteBtn.style.color = "";
+                document.getElementById('micStatusText').innerText = "● In Call";
+            }
+        }
+
+        // وظيفة الديفين (كتم صوت صاحبك وسماع لا شيء تماماً عندك)
+        function toggleDeafen() {
+            isDeafened = !isDeafened;
+            const remoteAudio = document.getElementById('remoteAudio');
+            remoteAudio.muted = isDeafened;
+
+            const deafenBtn = document.getElementById('deafenBtn');
+            if (isDeafened) {
+                deafenBtn.innerText = "Undeafen 🎧";
+                deafenBtn.style.background = "rgba(248, 81, 73, 0.15)";
+                deafenBtn.style.borderColor = "#f85149";
+                deafenBtn.style.color = "#f85149";
+                
+                // لو عملت Deafen مفترض تلقائياً يعمل Mute كمان زي الديسكورد
+                if (!isMuted) {
+                    toggleMute();
+                }
+            } else {
+                deafenBtn.innerText = "Deafen 🎧";
+                deafenBtn.style.background = "";
+                deafenBtn.style.borderColor = "";
+                deafenBtn.style.color = "";
+            }
         }
 
         function switchRoom(roomName, elementId) {
@@ -235,12 +290,22 @@
             if (activeConnection) {
                 activeConnection.close();
             }
+            
+            // إعادة ضبط حالات الأزرار
+            isMuted = false;
+            isDeafened = false;
+            document.getElementById('remoteAudio'].muted = false;
+
             document.getElementById('statusHeading').innerText = "Call Ended";
             document.getElementById('subStatusText').innerText = "Share your ID or enter a friend's ID to reconnect.";
             document.getElementById('pulseBox').classList.remove('active');
             document.getElementById('statusDot').className = "dot online";
             document.getElementById('connLabel').innerText = "Server Ready";
             document.getElementById('micStatusText').innerText = "● Ready";
+            
+            // إخفاء الأزرار
+            document.getElementById('muteBtn').style.display = "none";
+            document.getElementById('deafenBtn').style.display = "none";
             document.getElementById('endBtn').style.display = "none";
         }
     </script>
