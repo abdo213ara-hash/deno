@@ -224,13 +224,11 @@
             document.getElementById('connLabel').innerText = "Voice Connected (P2P)";
             document.getElementById('micStatusText').innerText = "● In Call";
             
-            // إظهار أزرار التحكم أثناء المكالمة
             document.getElementById('muteBtn').style.display = "block";
             document.getElementById('deafenBtn').style.display = "block";
             document.getElementById('endBtn').style.display = "block";
         }
 
-        // وظيفة الميوت (كتم المايك عن الطرف الآخر)
         function toggleMute() {
             if (!localStream) return;
             isMuted = !isMuted;
@@ -252,7 +250,6 @@
             }
         }
 
-        // وظيفة الديفين (كتم صوت صاحبك وسماع لا شيء تماماً عندك)
         function toggleDeafen() {
             isDeafened = !isDeafened;
             const remoteAudio = document.getElementById('remoteAudio');
@@ -265,7 +262,6 @@
                 deafenBtn.style.borderColor = "#f85149";
                 deafenBtn.style.color = "#f85149";
                 
-                // لو عملت Deafen مفترض تلقائياً يعمل Mute كمان زي الديسكورد
                 if (!isMuted) {
                     toggleMute();
                 }
@@ -291,10 +287,9 @@
                 activeConnection.close();
             }
             
-            // إعادة ضبط حالات الأزرار
             isMuted = false;
             isDeafened = false;
-            document.getElementById('remoteAudio'].muted = false;
+            document.getElementById('remoteAudio').muted = false;
 
             document.getElementById('statusHeading').innerText = "Call Ended";
             document.getElementById('subStatusText').innerText = "Share your ID or enter a friend's ID to reconnect.";
@@ -303,7 +298,6 @@
             document.getElementById('connLabel').innerText = "Server Ready";
             document.getElementById('micStatusText').innerText = "● Ready";
             
-            // إخفاء الأزرار
             document.getElementById('muteBtn').style.display = "none";
             document.getElementById('deafenBtn').style.display = "none";
             document.getElementById('endBtn').style.display = "none";
